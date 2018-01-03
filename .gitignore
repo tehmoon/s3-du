@@ -1,3 +1,6 @@
 s3-du
+s3-du.exe
+s3-du*.gz
+s3-du*.checksum
 *.swp
 *.swo
