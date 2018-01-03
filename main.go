@@ -20,7 +20,11 @@ func main() {
     os.Exit(2)
   }
 
-  svc := s3.New(session.New())
+  sess := session.Must(session.NewSessionWithOptions(session.Options{
+      SharedConfigState: session.SharedConfigEnable,
+  }))
+
+  svc := s3.New(sess)
   sync := make(chan *Directory)
 
   for _, prefix := range PREFIXES {

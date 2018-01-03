@@ -16,7 +16,7 @@ go build # A binary name s3-du will be generated in the directory
 ## Example
 
 ```
-AWS_REGION=us-east-1 s3-du -b blih -d 0
+s3-du -b blih -d 0
 ```
 
 ## Usage
@@ -31,7 +31,14 @@ Usage of ./s3-du:
 ```
 
 ## S3 Credentials
-It uses the `s3` official SDK for `go`, so you can use the same credential options as from Boto for example.
+It uses the `S3` official SDK for `Go`, so you can use the same credential options as from `awscli` for example.
+
+Supported environment variables:
+  - AWS_ACCESS_KEY_ID
+  - AWS_SECRET_ACCESS_KEY
+  - AWS_PROFILE
+  - AWS_CONFIG_FILE
+  - AWS_SHARED_CREDENTIALS_FILE
 
 You'll also need those access in order for the tool to work:
 ```
