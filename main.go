@@ -11,7 +11,12 @@ import (
 
 const (
   PREFIXES = "/0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ!-_.*'()"
+  OUTPUT_LINE Output = iota
+  OUTPUT_CSV
+  OUTPUT_JSON_LINE
 )
+
+type Output uint8
 
 func main() {
   options, err := ParseFlags()
@@ -38,7 +43,10 @@ func main() {
     MergeDirectories(root, <- sync)
   }
 
-  InspectDepth(root, options.Depth)
+  err = OutputTree(root, options.Depth, options.OutputFormat)
+  if err != nil {
+    fmt.Fprintln(os.Stderr, err.Error())
+  }
 }
 
 func fetchPrefix(svc *s3.S3, bucket, prefix string, syncMaster chan *Directory) {

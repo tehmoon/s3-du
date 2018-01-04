@@ -1,18 +1,22 @@
 package main
 
 import (
+  "time"
   "strings"
   "path/filepath"
+  "path"
 )
 
 type Directory struct {
-  Parent *Directory
-  Children []*Directory
+  Parent *Directory `json:"-"`
+  Children []*Directory `json:"-"`
+  Root string `json:"path"`
 
   // Number of files incremented by CreateFullPathFile()
-  Files int64
-  Size int64
-  Name string
+  Files int64 `json:"regular_files"`
+  Size int64 `json:"byte_size"`
+  Name string `json:"-"`
+  Now time.Time `json:"now"`
 }
 
 // Recursively create directory for filepath. Filepath is obviously a file
@@ -40,10 +44,9 @@ func (d *Directory) CreateFullPathFile(path string, size int64) (*Directory) {
     }
 
     if child == nil {
-      child = NewDirectory(directory)
+      child = NewDirectory(cwd, directory)
       child.Size = size
       child.Files++
-      child.Parent = cwd
       cwd.Children = append(cwd.Children, child)
     }
 
@@ -60,19 +63,20 @@ func (d *Directory) CreateCWDDirectory(name string) (*Directory) {
     }
   }
 
-  dir := NewDirectory(name)
-  dir.Parent = d
+  dir := NewDirectory(d, name)
 
   d.Children = append(d.Children, dir)
 
   return dir
 }
 
-func NewDirectory(name string) (*Directory) {
+func NewDirectory(parent *Directory, name string) (*Directory) {
   return &Directory{
     Children: make([]*Directory, 0),
     Size: 0,
     Name: name,
+    Parent: parent,
+    Root: path.Join(parent.Root, name),
   }
 }
 
@@ -81,6 +85,7 @@ func NewRootDirectory() (*Directory) {
     Children: make([]*Directory, 0),
     Size: 0,
     Name: "/",
+    Root: "/",
   }
 }
 
