@@ -43,7 +43,7 @@ func main() {
     MergeDirectories(root, <- sync)
   }
 
-  err = OutputTree(root, options.Depth, options.OutputFormat)
+  err = OutputTree(root, options.Depth, options.Template)
   if err != nil {
     fmt.Fprintln(os.Stderr, err.Error())
   }

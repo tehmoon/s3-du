@@ -17,7 +17,7 @@ go build # A binary name s3-du will be generated in the directory
 
 ```
 s3-du -b blih -d 0
-s3-du -b blih -d 1 -f json_line
+s3-du -b blih -d 1 -template "{{ . | json }}"
 ```
 
 ## Usage
@@ -28,10 +28,10 @@ Usage of ./s3-du:
     	Bucket to fetch keys from
   -d uint
     	Calculate directory sizes with specified depth
-  -f string
-    	Output format to use. One of: line, json_line or csv (default "line")
   -p string
     	Prefix for s3 object keys
+  -template string
+    	Go text/template to use when output. Use json or json_indent functions if you want (default "directory {{ .Root }} has size {{ .Size }} and {{ .Files }} files.")
 ```
 
 You can use the field `now` to group by data the data set. The field is calculated once per run

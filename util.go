@@ -4,6 +4,8 @@ import (
   "path"
   "os"
   "github.com/tehmoon/errors"
+  "text/template"
+  "encoding/json"
 )
 
 func inspectDepth(d *Directory, depth uint64, root string, send chan *Directory) {
@@ -20,15 +22,10 @@ func inspectDepth(d *Directory, depth uint64, root string, send chan *Directory)
   }
 }
 
-func OutputTree(d *Directory, depth uint64, ot Output) (error) {
+func OutputTree(d *Directory, depth uint64, tmpl *template.Template) (error) {
   send := make(chan *Directory)
   stop := make(chan struct{})
   syncBack := make(chan error)
-
-  printer, err := NewPrinter(os.Stdout, ot)
-  if err != nil {
-    return errors.Wrap(err, "Error calling NewPrinter()")
-  }
 
   go func () {
     var err error
@@ -36,9 +33,9 @@ func OutputTree(d *Directory, depth uint64, ot Output) (error) {
     LOOP: for {
       select {
         case d := <- send:
-          err = printer.Print(d)
+          err = tmpl.Execute(os.Stdout, d)
           if err != nil {
-            err = errors.Wrap(err, "Error printing output")
+            err = errors.Wrap(err, "Error templating the output")
             break LOOP
           }
         case <- stop:
@@ -46,7 +43,6 @@ func OutputTree(d *Directory, depth uint64, ot Output) (error) {
       }
     }
 
-    printer.Close()
     syncBack <- err
   }()
 
@@ -57,3 +53,24 @@ func OutputTree(d *Directory, depth uint64, ot Output) (error) {
 
   return <- syncBack
 }
+
+var (
+  functionTemplates = template.FuncMap{
+    "json": func(d interface{}) (string) {
+      payload, err := json.Marshal(d)
+      if err != nil {
+        return ""
+      }
+
+      return string(payload[:])
+    },
+    "json_indent": func(d interface{}) (string) {
+      payload, err := json.MarshalIndent(d, "", "  ")
+      if err != nil {
+        return ""
+      }
+
+      return string(payload[:])
+    },
+  }
+)

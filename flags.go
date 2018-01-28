@@ -1,9 +1,10 @@
 package main
 
 import (
+  "fmt"
   "flag"
-  "strings"
   "github.com/tehmoon/errors"
+  "text/template"
 )
 
 func ParseFlags() (*Options, error) {
@@ -12,7 +13,7 @@ func ParseFlags() (*Options, error) {
   flag.StringVar(&flags.Prefix, "p", "", "Prefix for s3 object keys")
   flag.StringVar(&flags.Bucket, "b", "", "Bucket to fetch keys from")
   flag.Uint64Var(&flags.Depth, "d", 0, "Calculate directory sizes with specified depth")
-  flag.StringVar(&flags.OutputFormat, "f", "line", "Output format to use. One of: line, json_line or csv")
+  flag.StringVar(&flags.Template, "template", `directory {{ .Root }} has size {{ .Size }} and {{ .Files }} files.`, "Go text/template to use when output. Use json or json_indent functions if you want")
 
   flag.Parse()
 
@@ -20,17 +21,15 @@ func ParseFlags() (*Options, error) {
     return nil, errors.New("Option -b is mandatory")
   }
 
-  var outputFormat Output
+  if flags.Template == "" {
+    return nil, errors.New("Option -template cannot be empty")
+  }
 
-  switch strings.ToLower(flags.OutputFormat) {
-    case "line":
-      outputFormat = OUTPUT_LINE
-    case "json_line":
-      outputFormat = OUTPUT_JSON_LINE
-    case "csv":
-      outputFormat = OUTPUT_CSV
-    default:
-      return nil, errors.Errorf("Unknown option -f format type: %s", flags.OutputFormat)
+  flags.Template = fmt.Sprintf("%s\n", flags.Template)
+
+  tmpl, err := template.New("root").Funcs(functionTemplates).Parse(flags.Template)
+  if err != nil {
+    return nil, errors.Wrap(err, "Error parsing template")
   }
 
   options := &Options{
@@ -38,7 +37,7 @@ func ParseFlags() (*Options, error) {
     Prefix: flags.Prefix,
     Bucket: flags.Bucket,
     Human: flags.Human,
-    OutputFormat: outputFormat,
+    Template: tmpl,
   }
 
   return options, nil
@@ -49,7 +48,7 @@ type Options struct {
   Prefix string
   Bucket string
   Human bool
-  OutputFormat Output
+  Template *template.Template
 }
 
 type Flags struct {
@@ -57,5 +56,5 @@ type Flags struct {
   Prefix string
   Bucket string
   Human bool
-  OutputFormat string
+  Template string
 }
