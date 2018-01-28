@@ -20,6 +20,22 @@ s3-du -b blih -d 0
 s3-du -b blih -d 1 -template "{{ . | json }}"
 ```
 
+## Attributes
+
+You use the `text/template` package from Go to build your templates.
+
+Here are the root object:
+
+```
+type DirectoryAttr struct {
+  Root string `json:"path"`
+
+  // Number of files incremented by CreateFullPathFile()
+  Files int64 `json:"regular_files"`
+  Size int64 `json:"byte_size"`
+}
+```
+
 ## Usage
 
 ```
@@ -33,8 +49,6 @@ Usage of ./s3-du:
   -template string
     	Go text/template to use when output. Use json or json_indent functions if you want (default "directory {{ .Root }} has size {{ .Size }} and {{ .Files }} files.")
 ```
-
-You can use the field `now` to group by data the data set. The field is calculated once per run
 
 ## S3 Credentials
 It uses the `S3` official SDK for `Go`, so you can use the same credential options as from `awscli` for example.

@@ -8,11 +8,11 @@ import (
   "encoding/json"
 )
 
-func inspectDepth(d *Directory, depth uint64, root string, send chan *Directory) {
+func inspectDepth(d *Directory, depth uint64, root string, send chan *DirectoryAttr) {
   root = path.Join(root, d.Name)
 
   if len(d.Children) == 0 || depth == 0 {
-    send <- d
+    send <- &d.Attr
     return
   }
 
@@ -23,7 +23,7 @@ func inspectDepth(d *Directory, depth uint64, root string, send chan *Directory)
 }
 
 func OutputTree(d *Directory, depth uint64, tmpl *template.Template) (error) {
-  send := make(chan *Directory)
+  send := make(chan *DirectoryAttr)
   stop := make(chan struct{})
   syncBack := make(chan error)
 

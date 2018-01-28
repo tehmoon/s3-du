@@ -1,22 +1,24 @@
 package main
 
 import (
-  "time"
   "strings"
   "path/filepath"
   "path"
 )
 
 type Directory struct {
-  Parent *Directory `json:"-"`
-  Children []*Directory `json:"-"`
+  Parent *Directory
+  Children []*Directory
+  Name string
+  Attr DirectoryAttr
+}
+
+type DirectoryAttr struct {
   Root string `json:"path"`
 
   // Number of files incremented by CreateFullPathFile()
   Files int64 `json:"regular_files"`
   Size int64 `json:"byte_size"`
-  Name string `json:"-"`
-  Now time.Time `json:"now"`
 }
 
 // Recursively create directory for filepath. Filepath is obviously a file
@@ -27,8 +29,8 @@ func (d *Directory) CreateFullPathFile(path string, size int64) (*Directory) {
 
   // If it is the root then update size and files
   if d.Parent == nil {
-    d.Size += size
-    d.Files++
+    d.Attr.Size += size
+    d.Attr.Files++
   }
 
   for _, directory := range directories {
@@ -36,8 +38,8 @@ func (d *Directory) CreateFullPathFile(path string, size int64) (*Directory) {
 
     for _, c := range cwd.Children {
       if directory == c.Name {
-        c.Size += size
-        c.Files++
+        c.Attr.Size += size
+        c.Attr.Files++
         child = c
         break
       }
@@ -45,8 +47,8 @@ func (d *Directory) CreateFullPathFile(path string, size int64) (*Directory) {
 
     if child == nil {
       child = NewDirectory(cwd, directory)
-      child.Size = size
-      child.Files++
+      child.Attr.Size = size
+      child.Attr.Files++
       cwd.Children = append(cwd.Children, child)
     }
 
@@ -73,25 +75,29 @@ func (d *Directory) CreateCWDDirectory(name string) (*Directory) {
 func NewDirectory(parent *Directory, name string) (*Directory) {
   return &Directory{
     Children: make([]*Directory, 0),
-    Size: 0,
+    Attr: DirectoryAttr{
+      Root: path.Join(parent.Attr.Root, name),
+      Size: 0,
+    },
     Name: name,
     Parent: parent,
-    Root: path.Join(parent.Root, name),
   }
 }
 
 func NewRootDirectory() (*Directory) {
   return &Directory{
     Children: make([]*Directory, 0),
-    Size: 0,
+    Attr: DirectoryAttr{
+      Root: "/",
+      Size: 0,
+    },
     Name: "/",
-    Root: "/",
   }
 }
 
 func MergeDirectories(to, from *Directory) {
-  to.Size += from.Size
-  to.Files += from.Files
+  to.Attr.Size += from.Attr.Size
+  to.Attr.Files += from.Attr.Files
 
   if len(from.Children) == 0 {
     return
